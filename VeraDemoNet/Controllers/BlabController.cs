@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Data.SqlClient;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Web.Mvc;
@@ -286,6 +287,8 @@ namespace VeraDemoNet.Controllers
             return viewModel;
         }
 
+        public static readonly string[] whiteListCommands = { "Listen", "Ignore" };
+
         [HttpPost, ActionName("Blabbers")]
         public ActionResult PostBlabbers(string blabberUsername, string command)
         {
@@ -296,23 +299,26 @@ namespace VeraDemoNet.Controllers
 
             var username = GetLoggedInUsername();
 
-            try
+            if(whiteListCommands.Any(x => string.Compare(x, command, true) == 0))
             {
-                using (var dbContext = new BlabberDB())
+                try
                 {
-                    dbContext.Database.Connection.Open();
+                    using (var dbContext = new BlabberDB())
+                    {
+                        dbContext.Database.Connection.Open();
 
-                    var commandType = Type.GetType("VeraDemoNet.Commands." + UpperCaseFirst(command) + "Command");
+                        var commandType = Type.GetType("VeraDemoNet.Commands." + UpperCaseFirst(command) + "Command");
 
-                    /* START BAD CODE */
-                    var cmdObj = (IBlabberCommand) Activator.CreateInstance(commandType, dbContext.Database.Connection, username);
-                    cmdObj.Execute(blabberUsername);
-                    /* END BAD CODE */
+                        /* START BAD CODE */
+                        var cmdObj = (IBlabberCommand)Activator.CreateInstance(commandType, dbContext.Database.Connection, username);
+                        cmdObj.Execute(blabberUsername);
+                        /* END BAD CODE */
+                    }
                 }
-            }
-            catch (Exception ex)
-            {
-                logger.Error(ex);
+                catch (Exception ex)
+                {
+                    logger.Error(ex);
+                }
             }
 
             var viewModel = PopulateBlabbersViewModel("blab_name ASC", username);
