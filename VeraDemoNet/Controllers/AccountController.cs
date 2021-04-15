@@ -74,7 +74,7 @@ namespace VeraDemoNet.Controllers
             Session["username"] = deserializedUser.UserName;
 
             //if (Url.IsLocalUrl(ReturnUrl))  
-            if (string.IsNullOrEmpty(ReturnUrl))
+            if (!Url.IsLocalUrl(ReturnUrl) || string.IsNullOrEmpty(ReturnUrl))
             {
                 return RedirectToAction("Feed", "Blab");
             }
@@ -127,7 +127,7 @@ namespace VeraDemoNet.Controllers
                         }
                     }
 
-                    if (string.IsNullOrEmpty(ReturnUrl))
+                    if (!Url.IsLocalUrl(ReturnUrl) || string.IsNullOrEmpty(ReturnUrl))
                     {
                         return RedirectToAction("Feed", "Blab");
                     }
