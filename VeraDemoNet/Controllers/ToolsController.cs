@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Web.Hosting;
 using System.Web.Mvc;
 using VeraDemoNet.Models;
@@ -44,9 +46,12 @@ namespace VeraDemoNet.Controllers
             return View("Tools", viewModel);
         }
 
+        private const string ValidIpAddressRegex = @"^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$";
+        private const string ValidHostnameRegex = @"^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$";
+
         private string Ping(string host)
         {
-            if (string.IsNullOrEmpty(host))
+            if (string.IsNullOrEmpty(host) || (!Regex.IsMatch(host, ValidHostnameRegex) && !Regex.IsMatch(host, ValidIpAddressRegex)))
             {
                 return "";
             }
@@ -77,11 +82,13 @@ namespace VeraDemoNet.Controllers
             return output == null ? "" : output.ToString();
         }
 
+        private static readonly string[] WhiteListFortuneFiles = { "funny.txt", "offensive.txt" };
+
         private string Fortune(string fortuneFile)
         {
             var output = new StringBuilder();
 
-            if (string.IsNullOrEmpty(fortuneFile)) 
+            if (string.IsNullOrEmpty(fortuneFile) || !WhiteListFortuneFiles.Contains(fortuneFile)) 
             {
                 fortuneFile = "funny.txt";
             }
