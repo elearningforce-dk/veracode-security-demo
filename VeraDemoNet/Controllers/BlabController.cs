@@ -5,6 +5,7 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Web;
 using System.Web.Mvc;
 using VeraDemoNet.Commands;
 using VeraDemoNet.DataAccess;
@@ -150,7 +151,7 @@ namespace VeraDemoNet.Controllers
                     var post = new Blab
                     {
                         Id = blabsForMeResults.GetInt32(5),
-                        Content = blabsForMeResults.GetString(2),
+                        Content = HttpUtility.HtmlEncode(blabsForMeResults.GetString(2)),
                         PostDate = blabsForMeResults.GetDateTime(3),
                         CommentCount = blabsForMeResults.GetInt32(4),
                         Author = author
@@ -175,7 +176,7 @@ namespace VeraDemoNet.Controllers
                     var post = new Blab
                     {
                         Id = blabsByMeResults.GetInt32(3),
-                        Content = blabsByMeResults.GetString(0),
+                        Content = HttpUtility.HtmlEncode(blabsByMeResults.GetString(0)),
                         PostDate = blabsByMeResults.GetDateTime(1),
                         CommentCount = blabsByMeResults.GetInt32(2),
                     };
