@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Web.Mvc;
 using VeraDemoNet.DataAccess;
+using System.Data.SqlClient;
 
 namespace VeraDemoNet.Controllers
 {
@@ -18,8 +19,9 @@ namespace VeraDemoNet.Controllers
             using (var dbContext = new BlabberDB())
             {
                 var found = dbContext.Database.SqlQuery<BasicUser>(
-                    "select username, real_name as realname, blab_name as blabname, is_admin as isadmin from users where username ='"
-                    + userName + "' and password='" + Md5Hash(passWord) + "';").ToList();
+                    "select username, real_name as realname, blab_name as blabname, is_admin as isadmin from users where username = @username and password = @password;",
+                    new SqlParameter("username", userName),
+                    new SqlParameter("password", Md5Hash(passWord))).ToList();
 
                 if (found.Count != 0)
                 {

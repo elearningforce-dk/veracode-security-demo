@@ -36,7 +36,7 @@ namespace VeraDemoNet.Controllers
         private string sqlSearchBlabs =
             "SELECT b.blabber, b.content, b.timestamp " +
             "FROM blabs b " +
-            "WHERE b.content LIKE '%{0}%' " + 
+            "WHERE b.content LIKE '%' + @searchText + '%' " + 
             "ORDER BY b.timestamp DESC";
         
         private string sqlBlabDetails = 
@@ -94,8 +94,13 @@ namespace VeraDemoNet.Controllers
             {
                 dbContext.Database.Connection.Open();
                 var searchBlabs = dbContext.Database.Connection.CreateCommand();
-                searchBlabs.CommandText = string.Format(sqlSearchBlabs, searchText);
+                var searchTextParameter = searchBlabs.CreateParameter();     
                 
+                searchTextParameter.ParameterName = "@searchText";
+                searchTextParameter.Value = searchText;   
+                searchBlabs.Parameters.Add(searchTextParameter);                
+                searchBlabs.CommandText = sqlSearchBlabs;
+
                 var searchBlabsResults = searchBlabs.ExecuteReader();
                 while (searchBlabsResults.Read())
                 {
