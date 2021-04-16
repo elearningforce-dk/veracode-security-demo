@@ -7,10 +7,9 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Reflection;
-using System.Runtime.Serialization;
-using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Web;
+using System.Web.Helpers;
 using System.Web.Hosting;
 using System.Web.Mvc;
 using Newtonsoft.Json;
@@ -530,7 +529,7 @@ namespace VeraDemoNet.Controllers
             }
 
             // Use the user class to get the hashed password.
-            user.Password = Md5Hash(user.Password);
+            user.Password = Crypto.HashPassword(user.Password);
             user.CreatedAt = DateTime.Now;
 
             using (var dbContext = new BlabberDB())

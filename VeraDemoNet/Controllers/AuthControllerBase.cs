@@ -1,9 +1,7 @@
 ﻿using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
 using System.Web.Mvc;
 using VeraDemoNet.DataAccess;
-using System.Data.SqlClient;
+using System.Web.Helpers;
 
 namespace VeraDemoNet.Controllers
 {
@@ -18,15 +16,12 @@ namespace VeraDemoNet.Controllers
 
             using (var dbContext = new BlabberDB())
             {
-                var found = dbContext.Database.SqlQuery<BasicUser>(
-                    "select username, real_name as realname, blab_name as blabname, is_admin as isadmin from users where username = @username and password = @password;",
-                    new SqlParameter("username", userName),
-                    new SqlParameter("password", Md5Hash(passWord))).ToList();
+                var found = dbContext.Users.FirstOrDefault(x => x.UserName == userName);
 
-                if (found.Count != 0)
+                if(found != null && Crypto.VerifyHashedPassword(found.Password, passWord))
                 {
                     Session["username"] = userName;
-                    return found[0];
+                    return new BasicUser(found.UserName, found.BlabName, found.RealName);
                 }
             }
 
@@ -59,27 +54,6 @@ namespace VeraDemoNet.Controllers
                     action = "Login",
                     ReturnUrl = HttpContext.Request.RawUrl
                 }));
-        }
-
-        protected static string Md5Hash(string input)
-        {
-            var sb = new StringBuilder();
-            if (string.IsNullOrEmpty(input))
-            {
-                return sb.ToString();
-            }
-
-            using (MD5 md5 = MD5.Create())
-            {
-                var retVal = md5.ComputeHash(Encoding.Unicode.GetBytes(input));
-
-                foreach (var t in retVal)
-                {
-                    sb.Append(t.ToString("x2"));
-                }
-            }
-
-            return sb.ToString();
         }
     }
 }
