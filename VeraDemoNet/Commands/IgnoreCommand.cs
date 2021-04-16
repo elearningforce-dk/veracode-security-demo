@@ -13,34 +13,42 @@ namespace VeraDemoNet.Commands
             this.username = username;
         }
 
-        public void Execute(string blabberUsername) {
-            var sqlQuery = "DELETE FROM listeners WHERE blabber=@blabber AND listener=@username";
-            
-            logger.Info(sqlQuery);
+        public void Execute(string blabberUsername) 
+        {
+            using (var action = connect.CreateCommand())
+            {
+                var sqlQuery = "DELETE FROM listeners WHERE blabber=@blabber AND listener=@username";
+                logger.Info(sqlQuery);
 
-            var action = connect.CreateCommand();
-            action.CommandText = sqlQuery;
-		    action.Parameters.Add(new SqlParameter{ParameterName = "@blabber", Value = blabberUsername});
-            action.Parameters.Add(new SqlParameter{ParameterName = "@username", Value = username});
-            action.ExecuteNonQuery();
-					
-            sqlQuery = "SELECT blab_name FROM users WHERE username = '" + blabberUsername + "'";
-            
-            var sqlStatement = connect.CreateCommand();
-            sqlStatement.CommandText = sqlQuery;
-            logger.Info(sqlQuery);
-            var blabName = sqlStatement.ExecuteScalar();
-		
-            /* START BAD CODE */
-            var ignoringEvent = username + " is now ignoring " + blabberUsername + "(" + blabName + ")";
-            sqlQuery = "INSERT INTO users_history (blabber, event) VALUES (\"" + username + "\", \"" + ignoringEvent + "\")";
+                action.CommandText = sqlQuery;
+                action.Parameters.Add(new SqlParameter { ParameterName = "@blabber", Value = blabberUsername });
+                action.Parameters.Add(new SqlParameter { ParameterName = "@username", Value = username });
+                action.ExecuteNonQuery();
+            }
 
-            sqlStatement.CommandText = sqlQuery;
+            using (var sqlStatement = connect.CreateCommand())
+            {
+                var selectQuery = "SELECT blab_name FROM users WHERE username = @username";
+                logger.Info(selectQuery);
 
-            /* END BAD CODE */
+                sqlStatement.CommandText = selectQuery;
+                sqlStatement.Parameters.Add(new SqlParameter("username", blabberUsername));
+                var blabName = sqlStatement.ExecuteScalar();
+                                
+                using (var insertCommand = connect.CreateCommand())
+                {
+                    var ignoringEvent = username + " is now ignoring " + blabberUsername + "(" + blabName + ")";
+                    var insertQuery = "INSERT INTO users_history (blabber, event) VALUES (@username, @event)";
+                    
+                    logger.Info(ignoringEvent);
+                    logger.Info(insertQuery);
 
-            logger.Info(sqlQuery);
-            sqlStatement.ExecuteNonQuery();
+                    insertCommand.CommandText = insertQuery;
+                    insertCommand.Parameters.Add(new SqlParameter("username", username));
+                    insertCommand.Parameters.Add(new SqlParameter("event", ignoringEvent));
+                    insertCommand.ExecuteNonQuery();
+                }
+            }
         }
     }
 }
