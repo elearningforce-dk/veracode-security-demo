@@ -14,6 +14,7 @@ using System.Web.Hosting;
 using System.Web.Mvc;
 using Newtonsoft.Json;
 using VeraDemoNet.DataAccess;
+using VeraDemoNet.Helper;
 using VeraDemoNet.Models;
 
 namespace VeraDemoNet.Controllers
@@ -33,7 +34,7 @@ namespace VeraDemoNet.Controllers
         [HttpGet, ActionName("Login")]
         public ActionResult GetLogin(string ReturnUrl = "")
         {
-            logger.Info("Login page visited: " + ReturnUrl);
+            logger.SafeInfo("Login page visited: " + ReturnUrl);
 
             if (IsUserLoggedIn())
             {
@@ -45,19 +46,19 @@ namespace VeraDemoNet.Controllers
 
             if (userDetailsCookie == null || userDetailsCookie.Value.Length == 0)
             {
-                logger.Info("No user cookie");
+                logger.SafeInfo("No user cookie");
                 Session["username"] = "";
 
                 ViewBag.ReturnUrl = ReturnUrl;
                 return View();
             }
 
-            logger.Info("User details were remembered");
+            logger.SafeInfo("User details were remembered");
 
             var unencodedUserDetails = Encoding.UTF8.GetString(Convert.FromBase64String(userDetailsCookie.Value));
             var deserializedUser = JsonConvert.DeserializeObject<CustomSerializeModel>(unencodedUserDetails);
 
-            logger.Info("User details were retrieved for user: " + deserializedUser.UserName);
+            logger.SafeInfo("User details were retrieved for user: " + deserializedUser.UserName);
 
             Session["username"] = deserializedUser.UserName;
 
@@ -142,7 +143,7 @@ namespace VeraDemoNet.Controllers
         [HttpGet, ActionName("Profile")]
         public ActionResult GetProfile()
         {
-            logger.Info("Entering GetProfile");
+            logger.SafeInfo("Entering GetProfile");
 
             if (IsUserLoggedIn() == false)
             {
@@ -168,7 +169,7 @@ namespace VeraDemoNet.Controllers
         [HttpPost, ActionName("Profile")]
         public ActionResult PostProfile(string realName, string blabName, string userName, HttpPostedFileBase file)
         {
-            logger.Info("Entering PostProfile");
+            logger.SafeInfo("Entering PostProfile");
 
             if (IsUserLoggedIn() == false)
             {
@@ -237,7 +238,7 @@ namespace VeraDemoNet.Controllers
                     System.IO.File.Delete(imagePath);
                 }
 
-                logger.Info("Saving new profile image: " + imagePath);
+                logger.SafeInfo("Saving new profile image: " + imagePath);
 
                 file.SaveAs(imagePath);
             }
@@ -260,7 +261,7 @@ namespace VeraDemoNet.Controllers
         [AllowAnonymous]
         public ActionResult GetPasswordHint(string userName)
         {
-            logger.Info("Entering password-hint with username: " + userName);
+            logger.SafeInfo("Entering password-hint with username: " + userName);
 
             if (string.IsNullOrEmpty(userName))
             {
@@ -317,7 +318,7 @@ namespace VeraDemoNet.Controllers
                 {
                     using (var update = connection.CreateCommand())
                     {
-                        logger.Info("Preparing the Prepared Statement: " + sql);
+                        logger.SafeInfo("Preparing the Prepared Statement: " + sql);
                         update.CommandText = sql;
                         update.Parameters.Add(new SqlParameter { ParameterName = "@oldusername", Value = oldUsername });
                         update.Parameters.Add(new SqlParameter { ParameterName = "@newusername", Value = newUsername });
@@ -360,7 +361,7 @@ namespace VeraDemoNet.Controllers
         private void PopulateProfileViewModel(DbConnection connect, string username, ProfileViewModel viewModel)
         {
             string sqlMyProfile = "SELECT username, real_name, blab_name, is_admin FROM users WHERE username = '" + username + "'";
-            logger.Info(sqlMyProfile);
+            logger.SafeInfo(sqlMyProfile);
 
             using (var eventsCommand = connect.CreateCommand())
             {
@@ -382,7 +383,7 @@ namespace VeraDemoNet.Controllers
         [HttpGet, ActionName("DownloadProfileImage")]
         public ActionResult DownloadProfileImage()
         {
-            logger.Info("Entering downloadImage");
+            logger.SafeInfo("Entering downloadImage");
 
             if (IsUserLoggedIn() == false)
             {
@@ -393,7 +394,7 @@ namespace VeraDemoNet.Controllers
             var imagePath = Path.Combine(HostingEnvironment.MapPath("~/Images/"), username + ".png");
             var defaultImagePath = HostingEnvironment.MapPath("~/Images/default_profile.png");
 
-            logger.Info("Fetching profile image: " + imagePath);
+            logger.SafeInfo("Fetching profile image: " + imagePath);
 
             return File(System.IO.File.Exists(imagePath) ? imagePath : defaultImagePath, "image/png");
         }
@@ -401,7 +402,7 @@ namespace VeraDemoNet.Controllers
         [HttpGet, ActionName("register")]
         public ActionResult GetRegister()
         {
-            logger.Info("Entering GetRegister");
+            logger.SafeInfo("Entering GetRegister");
 
             return View(new RegisterViewModel());
         }
@@ -409,7 +410,7 @@ namespace VeraDemoNet.Controllers
         [HttpPost, ActionName("register")]
         public ActionResult PostRegister(string username)
         {
-            logger.Info("PostRegister processRegister");
+            logger.SafeInfo("PostRegister processRegister");
             var registerViewModel = new RegisterViewModel();
 
             Session["username"] = username;
@@ -452,7 +453,7 @@ namespace VeraDemoNet.Controllers
             // START BAD CODE
             var sqlMyEvents = "select event from users_history where blabber='" +
                               username + "' ORDER BY eventid DESC; ";
-            logger.Info(sqlMyEvents);
+            logger.SafeInfo(sqlMyEvents);
 
             var myEvents = new List<string>();
             using (var eventsCommand = connect.CreateCommand())
@@ -506,7 +507,7 @@ namespace VeraDemoNet.Controllers
         [HttpGet, ActionName("RegisterFinish")]
         public ActionResult GetRegisterFinish()
         {
-            logger.Info("Entering showRegisterFinish");
+            logger.SafeInfo("Entering showRegisterFinish");
 
             return View();
         }
@@ -516,7 +517,7 @@ namespace VeraDemoNet.Controllers
         {
             if (user.Password != cpassword)
             {
-                logger.Info("Password and Confirm Password do not match");
+                logger.SafeInfo("Password and Confirm Password do not match");
                 return View(new RegisterViewModel
                 {
                     Error = "The Password and Confirm Password values do not match. Please try again.",
