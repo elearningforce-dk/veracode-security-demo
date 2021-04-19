@@ -227,27 +227,23 @@ namespace VeraDemoNet.Controllers
             }
 
             // Update user profile image
-            if (file != null && file.ContentLength > 0)
+            if (file != null && file.ContentLength > 0 && Path.GetExtension(file.FileName).ToLower() == ".png")
             {
                 // Get old image name, if any, to delete
-                var oldImage = imageDir + userName + ".png";
+                var imagePath = Path.Combine(imageDir, userName + ".png");
 
-                if (System.IO.File.Exists(oldImage))
+                if (System.IO.File.Exists(imagePath))
                 {
-                    System.IO.File.Delete(oldImage);
+                    System.IO.File.Delete(imagePath);
                 }
 
-                var extension = Path.GetExtension(file.FileName).ToLower();
-                var newFilename = Path.Combine(imageDir, userName);
-                newFilename += extension;
+                logger.Info("Saving new profile image: " + imagePath);
 
-                logger.Info("Saving new profile image: " + newFilename);
-
-                file.SaveAs(newFilename);
+                file.SaveAs(imagePath);
             }
 
             Response.StatusCode = (int)HttpStatusCode.OK;
-            var msg = "Successfully changed values!\\\\nusername: {0}\\\\nReal Name: {1}\\\\nBlab Name: {2}";
+            var msg = "Successfully changed values 11!\\\\nusername: {0}\\\\nReal Name: {1}\\\\nBlab Name: {2}";
 
             /* START BAD CODE */
 
@@ -384,7 +380,7 @@ namespace VeraDemoNet.Controllers
         }
 
         [HttpGet, ActionName("DownloadProfileImage")]
-        public ActionResult DownloadProfileImage(string image)
+        public ActionResult DownloadProfileImage()
         {
             logger.Info("Entering downloadImage");
 
@@ -393,11 +389,13 @@ namespace VeraDemoNet.Controllers
                 return RedirectToLogin(HttpContext.Request.RawUrl);
             }
 
-            var imagePath = Path.Combine(HostingEnvironment.MapPath("~/Images/"), image);
+            var username = GetLoggedInUsername();
+            var imagePath = Path.Combine(HostingEnvironment.MapPath("~/Images/"), username + ".png");
+            var defaultImagePath = HostingEnvironment.MapPath("~/Images/default_profile.png");
 
             logger.Info("Fetching profile image: " + imagePath);
 
-            return File(imagePath, System.Net.Mime.MediaTypeNames.Application.Octet);
+            return File(System.IO.File.Exists(imagePath) ? imagePath : defaultImagePath, "image/png");
         }
 
         [HttpGet, ActionName("register")]
@@ -442,7 +440,7 @@ namespace VeraDemoNet.Controllers
         private string GetProfileImageNameFromUsername(string viewModelUserName)
         {
             var imagePath = HostingEnvironment.MapPath("~/Images/");
-            var image = Directory.EnumerateFiles(imagePath).FirstOrDefault(f => Path.GetFileNameWithoutExtension(f) == viewModelUserName);
+            var image = Directory.EnumerateFiles(imagePath).FirstOrDefault(f => Path.GetFileName(f) == viewModelUserName + ".png");
 
             var filename = image == null ? "default_profile.png" : Path.GetFileName(image);
 
